@@ -73,11 +73,35 @@ Route::post('/users', function (\Illuminate\Http\Request $request) {
     $eligible = $request->input('eligible');
     $role_id = $request->input('role_id');
     $class_id = $request->input('class_id');
+    if($eligible !== 0 && $eligible !== 1 ){
+        return response()->json(['message' => 'eligibility can only be 0 or 1'], 409);
+    }
 
     DB::insert('INSERT INTO users (firstname, lastname, email, password, eligible, role_id, class_id) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)', [$firstname, $lastname, $email, $password, $eligible, $role_id, $class_id]);
 
     return response()->json(['message' => 'user created successfully'], 201);
+});
+
+Route::put('/users/{id}', function (\Illuminate\Http\Request $request, $id) {
+    $firstname = $request->input('firstname');
+    $lastname = $request->input('lastname');
+    $email = $request->input('email');
+    $password = $request->input('password');
+    $eligible = $request->input('eligible');
+    $role_id = $request->input('role_id');
+    $class_id = $request->input('class_id');
+    
+    if($eligible != 0 && $eligible != 1 ){
+        return response()->json(['message' => 'eligibility can only be 0 or 1'], 404);
+    } 
+
+    $affected = DB::update('UPDATE users SET firstname = ?, lastname = ?, email = ?, password = ?, eligible = ?, role_id = ?, class_id = ? WHERE id = ?', [$firstname, $lastname, $email, $password, $eligible, $role_id, $class_id, $id]);
+
+    if ($affected === 0) {
+        return response()->json(['message' => 'User not found or no changes made'], 404);
+    }
+    return response()->json(['message' => 'User updated successfully']);
 });
 
 // Delete a user by ID
