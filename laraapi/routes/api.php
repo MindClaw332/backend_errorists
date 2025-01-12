@@ -234,8 +234,6 @@ Route::get('/test-user/{id}', function ($id) {
 });
 
 //tests endpoint
-// Tests
-
 // Get all tests
 Route::get('/tests', function () {
     $test = DB::select('SELECT * FROM tests');
@@ -282,4 +280,18 @@ Route::put('/tests/{id}', function (\Illuminate\Http\Request $request, $id) {
         return response()->json(['message' => 'Test not found or no changes made'], 404);
     }
     return response()->json(['message' => 'Test updated successfully']);
+});
+
+// Course-test
+
+// Get all tests from a course
+Route::get('/course-test/{id}', function ($id) {
+    $course = DB::select('SELECT courses.name, tests.name, tests.maxvalue 
+                            FROM courses 
+                            LEFT JOIN tests ON tests.course_id = courses.id 
+                            WHERE courses.id = ? ', [$id]);
+    if (empty($course)) {
+        return response()->json(['message' => 'course not found or no tests for this course'], 404);
+    }
+    return response()->json($course);
 });
