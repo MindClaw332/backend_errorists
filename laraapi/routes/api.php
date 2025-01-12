@@ -147,7 +147,6 @@ Route::get('/classes/{id}', function ($id) {
     return response()->json($class);
 });
 
-//NEEDS TO BE FIXED
 //Update a class
 Route::put('/classes/{id}', function (\Illuminate\Http\Request $request, $id) {
     $name = $request->input('name');
@@ -178,4 +177,86 @@ Route::delete('/classes/{id}', function ($id) {
         return response()->json(['message' => 'class not found'], 404);
     }
     return response()->json(['message' => 'class deleted successfully']);
+});
+
+// Groups endpoint
+// Get all groups 
+// needs changes
+Route::get('/groups', function () {
+    $groups = DB::select('SELECT 
+                        courses.name AS tutoredcourse, groups.name AS groupname, firstname, lastname 
+                        FROM groups 
+                        JOIN (group_user JOIN users ON group_user.user_id = users.id) ON group_user.group_id = groups.id 
+                        JOIN courses ON groups.course_id = courses.id');
+    return response()->json($groups);
+});
+
+//create a group
+Route::post('/groups', function (\Illuminate\Http\Request $request) {
+    $name = $request->input('name');
+    $course_id = $request->input('course_id');
+
+    DB::insert('INSERT INTO groups (name, course_id) VALUES (?, ?)', [$name, $course_id]);
+
+    return response()->json(['message' => 'group created successfully'], 201);
+});
+
+// Delete a group by ID
+Route::delete('/groups/{id}', function ($id) {
+    $deleted = DB::delete('DELETE FROM groups WHERE id = ?', [$id]);
+    if ($deleted === 0) {
+        return response()->json(['message' => 'group not found'], 404);
+    }
+    return response()->json(['message' => 'group deleted successfully']);
+});
+
+// Roles
+// Get all roles
+Route::get('/roles', function () {
+    $role = DB::select('SELECT * FROM roles');
+    return response()->json($role);
+});
+
+// Test-users
+// Get all users from a test
+Route::get('/test-user/{id}', function ($id) {
+    $test = DB::select('SELECT 
+                        users.firstname, users.lastname, tests.name AS testname, value, tests.maxvalue
+                        FROM users
+                        INNER JOIN test_user ON test_user.user_id = users.id
+                        INNER JOIN tests ON test_user.test_id = tests.id
+                        WHERE tests.id =?
+                        ;', [$id]);
+    if (empty($test)) {
+        return response()->json(['message' => 'test not found'], 404);
+    }
+    return response()->json($test);
+});
+
+//tests endpoint
+// Tests
+
+// Get all tests
+Route::get('/tests', function () {
+    $test = DB::select('SELECT * FROM tests');
+    return response()->json($test);
+});
+
+Route::get('/tests/{id}', function ($id) {
+    $test = DB::select('SELECT * FROM tests WHERE id = ?', [$id]);
+    if (empty($test)) {
+        return response()->json(['message' => 'test not found'], 404);
+    }
+    return response()->json($test);
+});
+
+// Create a new test
+Route::post('/tests', function (\Illuminate\Http\Request $request) {
+    $name = $request->input('name');
+    $maxvalue = $request->input('maxvalue');
+    $course_id = $request->input('course_id');
+
+    DB::insert('INSERT INTO tests (name, maxvalue, course_id) VALUES (?, ?, ?)', [$name, $maxvalue, $course_id]);
+
+    return response()->json(['message' => 'test created successfully'], 201);
 });
