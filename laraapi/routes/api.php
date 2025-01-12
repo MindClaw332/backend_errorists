@@ -256,7 +256,30 @@ Route::post('/tests', function (\Illuminate\Http\Request $request) {
     $maxvalue = $request->input('maxvalue');
     $course_id = $request->input('course_id');
 
-    DB::insert('INSERT INTO tests (name, maxvalue, course_id) VALUES (?, ?, ?)', [$name, $maxvalue, $course_id]);
+    DB::insert('INSERT INTO tests (tests.name, tests.maxvalue, tests.course_id) VALUES (?, ?, ?)', [$name, $maxvalue, $course_id]);
 
     return response()->json(['message' => 'test created successfully'], 201);
+});
+
+// Delete a test by ID
+Route::delete('/tests/{id}', function ($id) {
+    $deleted = DB::delete('DELETE FROM tests WHERE id = ?', [$id]);
+    if ($deleted === 0) {
+        return response()->json(['message' => 'test not found'], 404);
+    }
+    return response()->json(['message' => 'test deleted successfully']);
+});
+
+// update a test
+Route::put('/tests/{id}', function (\Illuminate\Http\Request $request, $id) {
+    $name = $request->input('name');
+    $maxvalue = $request->input('maxvalue');
+    $course_id = $request->input('course_id');
+
+    $affected = DB::update('UPDATE tests SET tests.name = ?, tests.maxvalue = ?, tests.course_id = ?  WHERE id = ?', [$name, $course_id, $maxvalue, $id]);
+
+    if ($affected === 0) {
+        return response()->json(['message' => 'Test not found or no changes made'], 404);
+    }
+    return response()->json(['message' => 'Test updated successfully']);
 });
