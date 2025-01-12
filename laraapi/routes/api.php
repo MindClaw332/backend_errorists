@@ -33,7 +33,6 @@ Route::put('/courses/{id}', function (\Illuminate\Http\Request $request, $id) {
     return response()->json(['message' => 'Course updated successfully']);
 });
 
-
 // Create a new course
 Route::post('/courses', function (\Illuminate\Http\Request $request) {
     $name = $request->input('name');
@@ -97,6 +96,7 @@ Route::post('/users', function (\Illuminate\Http\Request $request) {
     return response()->json(['message' => 'user created successfully'], 201);
 });
 
+// Update a user
 Route::put('/users/{id}', function (\Illuminate\Http\Request $request, $id) {
     $firstname = $request->input('firstname');
     $lastname = $request->input('lastname');
@@ -127,4 +127,55 @@ Route::delete('/users/{id}', function ($id) {
     return response()->json(['message' => 'user deleted successfully']);
 });
 
-//
+// Classes
+// Get all classes
+Route::get('/classes', function () {
+    $class = DB::select('SELECT  * FROM classes');
+    return response()->json($class);
+});
+
+// Get a class and its students by id
+Route::get('/classes/{id}', function ($id) {
+    $class = DB::select('SELECT 
+                        classes.name AS classname, firstname, lastname, roles.name AS role
+                        FROM classes 
+                        INNER JOIN (users INNER JOIN roles ON users.role_id = roles.id) ON classes.id = users.class_id 
+                        WHERE classes.id = ?', [$id]);
+    if (empty($class)) {
+        return response()->json(['message' => 'class not found or no students in class'], 404);
+    }
+    return response()->json($class);
+});
+
+//NEEDS TO BE FIXED
+//Update a class
+Route::put('/classes/{id}', function (\Illuminate\Http\Request $request, $id) {
+    $name = $request->input('name');
+    $year = $request->input('year');
+
+    $affected = DB::update('UPDATE classes SET name = ?, year = ?  WHERE id = ?', [$name, $year, $id]);
+
+    if ($affected === 0) {
+        return response()->json(['message' => 'Class not found or no changes made'], 404);
+    }
+    return response()->json(['message' => 'Class updated successfully']);
+});
+
+// Create a new class
+Route::post('/classes', function (\Illuminate\Http\Request $request) {
+    $name = $request->input('name');
+    $year = $request->input('year');
+
+    DB::insert('INSERT INTO classes (name, year) VALUES (?, ?)', [$name, $year]);
+
+    return response()->json(['message' => 'class created successfully'], 201);
+});
+
+// Delete a class by ID
+Route::delete('/classes/{id}', function ($id) {
+    $deleted = DB::delete('DELETE FROM classes WHERE id = ?', [$id]);
+    if ($deleted === 0) {
+        return response()->json(['message' => 'class not found'], 404);
+    }
+    return response()->json(['message' => 'class deleted successfully']);
+});
