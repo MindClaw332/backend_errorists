@@ -21,6 +21,19 @@ Route::get('/courses/{id}', function ($id) {
     return response()->json($course[0]);
 });
 
+// Update a course
+Route::put('/courses/{id}', function (\Illuminate\Http\Request $request, $id) {
+    $name = $request->input('name');
+
+    $affected = DB::update('UPDATE courses SET courses.name = ? WHERE id = ?', [$name, $id]);
+
+    if ($affected === 0) {
+        return response()->json(['message' => 'Course not found or no changes made'], 404);
+    }
+    return response()->json(['message' => 'Course updated successfully']);
+});
+
+
 // Create a new course
 Route::post('/courses', function (\Illuminate\Http\Request $request) {
     $name = $request->input('name');
@@ -73,7 +86,8 @@ Route::post('/users', function (\Illuminate\Http\Request $request) {
     $eligible = $request->input('eligible');
     $role_id = $request->input('role_id');
     $class_id = $request->input('class_id');
-    if($eligible !== 0 && $eligible !== 1 ){
+
+    if ($eligible !== 0 && $eligible !== 1) {
         return response()->json(['message' => 'eligibility can only be 0 or 1'], 409);
     }
 
@@ -91,10 +105,10 @@ Route::put('/users/{id}', function (\Illuminate\Http\Request $request, $id) {
     $eligible = $request->input('eligible');
     $role_id = $request->input('role_id');
     $class_id = $request->input('class_id');
-    
-    if($eligible != 0 && $eligible != 1 ){
+    // this still throws an error when the input is a string
+    if ($eligible != 0 && $eligible != 1) {
         return response()->json(['message' => 'eligibility can only be 0 or 1'], 404);
-    } 
+    }
 
     $affected = DB::update('UPDATE users SET firstname = ?, lastname = ?, email = ?, password = ?, eligible = ?, role_id = ?, class_id = ? WHERE id = ?', [$firstname, $lastname, $email, $password, $eligible, $role_id, $class_id, $id]);
 
@@ -112,3 +126,5 @@ Route::delete('/users/{id}', function ($id) {
     }
     return response()->json(['message' => 'user deleted successfully']);
 });
+
+//
