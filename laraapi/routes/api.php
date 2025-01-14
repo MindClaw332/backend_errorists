@@ -184,7 +184,7 @@ Route::delete('/classes/{id}', function ($id) {
 // needs changes
 Route::get('/groups', function () {
     $groups = DB::select('SELECT 
-                        courses.name AS tutoredcourse, groups.name AS groupname, firstname, lastname 
+                        group_user.id, courses.name AS tutoredcourse, groups.name AS groupname, firstname, lastname 
                         FROM groups 
                         JOIN (group_user JOIN users ON group_user.user_id = users.id) ON group_user.group_id = groups.id 
                         JOIN courses ON groups.course_id = courses.id');
