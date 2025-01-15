@@ -54,11 +54,15 @@ Route::delete('/courses/{id}', function ($id) {
 // Get all users
 Route::get('/users', function () {
     $user = DB::select('SELECT 
-                        users.id, firstname, lastname, email, password, eligible,  roles.name AS role,class_id , classes.name AS class, year AS schoolyear
+                        users.id, firstname, lastname, email, password, eligible,  roles.name AS role,class_id , classes.name AS class, year AS schoolyear, 
+                        ROUND((SUM(test_user.`value`)/SUM(tests.`maxvalue`)) * 100, 2) AS average
                         FROM users
                         LEFT JOIN roles ON roles.id = users.role_id
                         LEFT JOIN classes ON classes.id = users.class_id
-                        ORDER BY users.firstname ASC');
+                        INNER JOIN test_user ON test_user.user_id = users.id
+                        INNER JOIN tests ON test_user.test_id = tests.id
+                        group by users.id
+                        ORDER BY users.firstname ASC;');
     return response()->json($user);
 });
 
@@ -184,7 +188,7 @@ Route::delete('/classes/{id}', function ($id) {
 // needs changes
 Route::get('/groups', function () {
     $groups = DB::select('SELECT 
-                        group_user.id, courses.name AS tutoredcourse, groups.name AS groupname, firstname, lastname 
+                        group_user.id, courses.name AS tutoredcourse, groups.name AS groupname, firstname, lastname, users.id AS user_id
                         FROM groups 
                         JOIN (group_user JOIN users ON group_user.user_id = users.id) ON group_user.group_id = groups.id 
                         JOIN courses ON groups.course_id = courses.id');
@@ -298,7 +302,7 @@ Route::get('/course-test/{id}', function ($id) {
 
 Route::get('/averagetotal/{id}', function ($id) {
     $averages = DB::select('SELECT users.id AS user_id,
-                        (SUM(test_user.`value`)/SUM(tests.`maxvalue`)) * 100 AS average
+                        ROUND((SUM(test_user.`value`)/SUM(tests.`maxvalue`)) * 100, 2) AS average
                         FROM users
                         INNER JOIN test_user ON test_user.user_id = users.id
                         INNER JOIN tests ON test_user.test_id = tests.id
