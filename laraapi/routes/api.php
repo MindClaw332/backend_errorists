@@ -54,7 +54,7 @@ Route::delete('/courses/{id}', function ($id) {
 // Get all users
 Route::get('/users', function () {
     $user = DB::select('SELECT 
-                        users.id, firstname, lastname, email, password, eligible, roles.name AS role, classes.name AS class, year AS schoolyear
+                        users.id, firstname, lastname, email, password, eligible,  roles.name AS role,class_id , classes.name AS class, year AS schoolyear
                         FROM users
                         LEFT JOIN roles ON roles.id = users.role_id
                         LEFT JOIN classes ON classes.id = users.class_id
@@ -221,11 +221,11 @@ Route::get('/roles', function () {
 // Get all users from a test
 Route::get('/test-user/{id}', function ($id) {
     $test = DB::select('SELECT 
-                        users.firstname, users.lastname, tests.name AS testname, value, tests.maxvalue
+                        tests.id, tests.name AS testname, value, tests.maxvalue
                         FROM users
                         INNER JOIN test_user ON test_user.user_id = users.id
                         INNER JOIN tests ON test_user.test_id = tests.id
-                        WHERE tests.id =?
+                        WHERE users.id =?
                         ;', [$id]);
     if (empty($test)) {
         return response()->json(['message' => 'test not found'], 404);
