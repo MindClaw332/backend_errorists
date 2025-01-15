@@ -295,3 +295,14 @@ Route::get('/course-test/{id}', function ($id) {
     }
     return response()->json($course);
 });
+
+Route::get('/averagetotal/{id}', function ($id) {
+    $averages = DB::select('SELECT users.id AS user_id,
+                        (SUM(test_user.`value`)/SUM(tests.`maxvalue`)) * 100 AS average
+                        FROM users
+                        INNER JOIN test_user ON test_user.user_id = users.id
+                        INNER JOIN tests ON test_user.test_id = tests.id
+                        WHERE users.id = ?
+                        group by users.id', [$id]);
+    return response()->json($averages);
+});
