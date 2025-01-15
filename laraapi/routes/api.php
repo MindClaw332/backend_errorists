@@ -225,11 +225,12 @@ Route::get('/roles', function () {
 // Get all users from a test
 Route::get('/test-user/{id}', function ($id) {
     $test = DB::select('SELECT 
-                        tests.id, tests.name AS testname, value, tests.maxvalue
+                        tests.id, tests.name AS testname, value, tests.maxvalue, courses.`name` AS coursename
                         FROM users
                         INNER JOIN test_user ON test_user.user_id = users.id
                         INNER JOIN tests ON test_user.test_id = tests.id
-                        WHERE users.id =?
+                        INNER JOIN courses ON tests.course_id = courses.id
+                        WHERE users.id = ?
                         ;', [$id]);
     if (empty($test)) {
         return response()->json(['message' => 'test not found'], 404);
