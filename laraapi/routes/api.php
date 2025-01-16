@@ -118,15 +118,26 @@ Route::get('/users', function (Request $request) {
 // Get user by id
 Route::get('/users/{id}', function ($id) {
     $user = DB::select('SELECT 
-                        firstname, lastname, email, password, eligible, roles.name AS role, classes.name AS class, year AS schoolyear
+                        firstname, lastname, eligible, roles.name AS role, classes.name AS class, year AS schoolyear
                         FROM users
                         INNER JOIN roles ON roles.id = users.role_id
                         INNER JOIN classes ON classes.id = users.class_id
                         WHERE users.id = ?', [$id]);
+    $user = $user[0]; 
+    $user->tests = DB::select('SELECT 
+                                tests.name AS test_name, 
+                                test_user.value AS test_value, 
+                                tests.maxvalue AS test_maxvalue 
+                                FROM test_user
+                                INNER JOIN tests ON test_user.test_id = tests.id
+                                WHERE test_user.user_id = ?', [$id]);
+    if(!$user->tests){
+        $user->tests = [];
+    }
     if (empty($user)) {
         return response()->json(['message' => 'user not found'], 404);
     }
-    return response()->json($user[0]);
+    return response()->json($user);
 });
 
 // Create a new user
