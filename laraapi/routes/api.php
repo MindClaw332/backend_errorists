@@ -303,7 +303,7 @@ Route::get('/test-user/{id}', function ($id) {
 Route::get('/tests', function () {
     $tests = DB::select('SELECT * FROM tests');
     foreach($tests as $test){
-        $test->users = DB::select('SELECT users.id, users.firstname, users.lastname FROM test_user
+        $test->users = DB::select('SELECT users.id, users.firstname, users.lastname, test_user.value FROM test_user
                                     INNER JOIN users ON test_user.user_id = users.id
                                     WHERE test_user.test_id = ?
                                     ORDER BY users.firstname ASC', [$test->id]);
