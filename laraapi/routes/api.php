@@ -7,9 +7,21 @@ use Illuminate\Support\Facades\DB;
 // Courses endpoint
 // Get all courses
 Route::get('/courses', function () {
-    $course = DB::select('SELECT * FROM courses
-                        ORDER BY name ASC');
-    return response()->json($course);
+    $courses = DB::select('SELECT * FROM courses
+                        ORDER BY courses.id ASC');
+    foreach ($courses as $course) {
+        $course->tests = DB::select('SELECT tests.`name` AS test_name,
+                                    tests.`maxvalue`,
+                                    courses.`name` AS course_name
+                                    FROM tests
+                                    INNER JOIN courses ON courses.id = tests.course_id
+                                    WHERE course_id = ?
+                                    ORDER BY tests.id ASC', [$course->id]);
+        if(!$course->tests){
+            $course->tests = [];
+        }
+    }
+    return response()->json($courses);
 });
 
 // Get a course by ID
@@ -52,32 +64,80 @@ Route::delete('/courses/{id}', function ($id) {
 
 // Users endpoint
 // Get all users
-Route::get('/users', function () {
-    $user = DB::select('SELECT 
-                        users.id, firstname, lastname, email, password, eligible,  roles.name AS role,class_id , classes.name AS class, year AS schoolyear, 
-                        ROUND((SUM(test_user.`value`)/SUM(tests.`maxvalue`)) * 100, 2) AS average
+Route::get('/users', function (Request $request) {
+    // Start the main query to get users
+    $users = DB::select('SELECT 
+                            users.id, 
+                            firstname, 
+                            lastname, 
+                            email, 
+                            password, 
+                            eligible,  
+                            roles.name AS role,
+                            class_id,
+                            classes.name AS class,
+                            year AS schoolyear,
+                            ROUND((SUM(test_user.value)/SUM(tests.maxvalue)) * 100, 2) AS average
                         FROM users
                         LEFT JOIN roles ON roles.id = users.role_id
                         LEFT JOIN classes ON classes.id = users.class_id
                         INNER JOIN test_user ON test_user.user_id = users.id
                         INNER JOIN tests ON test_user.test_id = tests.id
-                        group by users.id
-                        ORDER BY users.firstname ASC;');
-    return response()->json($user);
+                        GROUP BY users.id
+                        ORDER BY users.firstname ASC');
+    foreach ($users as $user) {
+        $user->tests = DB::select('SELECT 
+                                    tests.name AS test_name, 
+                                    test_user.value AS test_value, 
+                                    tests.maxvalue AS test_maxvalue 
+                                FROM test_user
+                                INNER JOIN tests ON test_user.test_id = tests.id
+                                WHERE test_user.user_id = ?', [$user->id]);
+        if(!$user->tests){
+            $user->tests = [];
+        }
+    }
+
+    foreach ($users as $user) {
+        $user->groups = DB::select('SELECT `groups`.id,
+                                    `groups`.`name` AS group_name,
+                                    courses.`name` AS course_name
+                                    FROM group_user
+                                    INNER JOIN `groups` On `groups`.id = group_user.group_id
+                                    INNER JOIN courses ON `groups`.course_id = courses.id
+                                    WHERE group_user.user_id = ?', [$user->id]);
+        if(!$user->tests){
+            $user->tests = [];
+        }
+    }
+
+    // Return the nested result as JSON
+    return response()->json($users);
 });
 
 // Get user by id
 Route::get('/users/{id}', function ($id) {
     $user = DB::select('SELECT 
-                        firstname, lastname, email, password, eligible, roles.name AS role, classes.name AS class, year AS schoolyear
+                        firstname, lastname, eligible, roles.name AS role, classes.name AS class, year AS schoolyear
                         FROM users
                         INNER JOIN roles ON roles.id = users.role_id
                         INNER JOIN classes ON classes.id = users.class_id
                         WHERE users.id = ?', [$id]);
+    $user = $user[0]; 
+    $user->tests = DB::select('SELECT 
+                                tests.name AS test_name, 
+                                test_user.value AS test_value, 
+                                tests.maxvalue AS test_maxvalue 
+                                FROM test_user
+                                INNER JOIN tests ON test_user.test_id = tests.id
+                                WHERE test_user.user_id = ?', [$id]);
+    if(!$user->tests){
+        $user->tests = [];
+    }
     if (empty($user)) {
         return response()->json(['message' => 'user not found'], 404);
     }
-    return response()->json($user[0]);
+    return response()->json($user);
 });
 
 // Create a new user
@@ -241,8 +301,14 @@ Route::get('/test-user/{id}', function ($id) {
 //tests endpoint
 // Get all tests
 Route::get('/tests', function () {
-    $test = DB::select('SELECT * FROM tests');
-    return response()->json($test);
+    $tests = DB::select('SELECT * FROM tests');
+    foreach($tests as $test){
+        $test->users = DB::select('SELECT users.id, users.firstname, users.lastname FROM test_user
+                                    INNER JOIN users ON test_user.user_id = users.id
+                                    WHERE test_user.test_id = ?
+                                    ORDER BY users.firstname ASC', [$test->id]);
+    }
+    return response()->json($tests);
 });
 
 Route::get('/tests/{id}', function ($id) {
