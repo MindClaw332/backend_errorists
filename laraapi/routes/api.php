@@ -67,17 +67,17 @@ Route::delete('/courses/{id}', function ($id) {
 Route::get('/users', function (Request $request) {
     // Start the main query to get users
     $users = DB::select('SELECT 
-                            users.id, 
-                            firstname, 
-                            lastname, 
-                            email, 
-                            password, 
-                            eligible,  
-                            roles.name AS role,
-                            class_id,
-                            classes.name AS class,
-                            year AS schoolyear,
-                            ROUND((SUM(test_user.value)/SUM(tests.maxvalue)) * 100, 2) AS average
+                        users.id, 
+                        firstname, 
+                        lastname, 
+                        email, 
+                        password, 
+                        eligible,  
+                        roles.name AS role,
+                        class_id,
+                        classes.name AS class,
+                        year AS schoolyear,
+                        ROUND((SUM(test_user.value)/SUM(tests.maxvalue)) * 100, 2) AS average
                         FROM users
                         LEFT JOIN roles ON roles.id = users.role_id
                         LEFT JOIN classes ON classes.id = users.class_id
