@@ -12,8 +12,11 @@ Route::post('/login', function (Request $request) {
     $credentials = $request->only('email', 'password');
 
     if (Auth::attempt($credentials)) {
+        $user = Auth::user();
         return response()->json([
-            'message' => 'we zijn',
+            'message' => 'valid credentials',
+            'user_id' => $user->id,
+            'role_id' => $user->role_id,
         ]);
     }
 
