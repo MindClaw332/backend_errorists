@@ -3,7 +3,42 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
+
+Route::post('/login', function (Request $request) {
+    $credentials = $request->only('email', 'password');
+
+    if (Auth::attempt($credentials)) {
+        return response()->json([
+            'message' => 'we zijn',
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'invalid credentials',
+    ], 401);
+});
+
+Route::post('/register', function (Request $request) {
+    $user = User::create([
+        'firstname' => $request->firstname,
+        'lastname' => $request->lastname,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'eligible' => $request->eligible,
+        'role_id' => $request->role_id,
+        'class_id' => $request->class_id
+    ]);
+
+    return response()->json($user,201);
+});
+
+Route::get('/registeredusers', function () {
+    return User::all();
+});
 // Courses endpoint
 // Get all courses
 Route::get('/courses', function () {
@@ -17,7 +52,7 @@ Route::get('/courses', function () {
                                     INNER JOIN courses ON courses.id = tests.course_id
                                     WHERE course_id = ?
                                     ORDER BY tests.id ASC', [$course->id]);
-        if(!$course->tests){
+        if (!$course->tests) {
             $course->tests = [];
         }
     }
@@ -93,7 +128,7 @@ Route::get('/users', function (Request $request) {
                                 FROM test_user
                                 INNER JOIN tests ON test_user.test_id = tests.id
                                 WHERE test_user.user_id = ?', [$user->id]);
-        if(!$user->tests){
+        if (!$user->tests) {
             $user->tests = [];
         }
     }
@@ -106,7 +141,7 @@ Route::get('/users', function (Request $request) {
                                     INNER JOIN `groups` On `groups`.id = group_user.group_id
                                     INNER JOIN courses ON `groups`.course_id = courses.id
                                     WHERE group_user.user_id = ?', [$user->id]);
-        if(!$user->tests){
+        if (!$user->tests) {
             $user->tests = [];
         }
     }
@@ -123,7 +158,7 @@ Route::get('/users/{id}', function ($id) {
                         INNER JOIN roles ON roles.id = users.role_id
                         INNER JOIN classes ON classes.id = users.class_id
                         WHERE users.id = ?', [$id]);
-    $user = $user[0]; 
+    $user = $user[0];
     $user->tests = DB::select('SELECT 
                                 tests.name AS test_name, 
                                 test_user.value AS test_value, 
@@ -131,7 +166,7 @@ Route::get('/users/{id}', function ($id) {
                                 FROM test_user
                                 INNER JOIN tests ON test_user.test_id = tests.id
                                 WHERE test_user.user_id = ?', [$id]);
-    if(!$user->tests){
+    if (!$user->tests) {
         $user->tests = [];
     }
     if (empty($user)) {
@@ -302,7 +337,7 @@ Route::get('/test-user/{id}', function ($id) {
 // Get all tests
 Route::get('/tests', function () {
     $tests = DB::select('SELECT * FROM tests');
-    foreach($tests as $test){
+    foreach ($tests as $test) {
         $test->users = DB::select('SELECT users.id, users.firstname, users.lastname, test_user.value FROM test_user
                                     INNER JOIN users ON test_user.user_id = users.id
                                     WHERE test_user.test_id = ?
